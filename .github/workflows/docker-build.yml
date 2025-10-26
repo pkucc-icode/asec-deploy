@@ -1,0 +1,60 @@
+name: Build and Package Docker Images
+
+on:
+  workflow_dispatch:  # 手动触发 Workflow
+
+jobs:
+  build-and-package:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: 检出代码
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: 动态生成时间戳（仅用于文件夹命名，不用于镜像标签）
+      - name: Generate Dynamic Timestamp
+        run: |
+          TZ=Asia/Shanghai date +'%Y%m%d%H%M%S' > timestamp.txt
+          echo "TIMESTAMP=$(cat timestamp.txt)" >> $GITHUB_ENV
+
+      # Step 3: 输出生成的时间戳（可选，用于调试）
+      - name: Show Generated Timestamp
+        run: echo "Generated timestamp is ${{ env.TIMESTAMP }}"
+
+      # Step 4: 构建 Nginx 镜像
+      - name: Build Nginx Image
+        run: |
+          docker build -t asec-frontend -f ./Dockerfile --target asec-frontend .
+
+      # Step 5: 构建 MySQL 镜像
+      - name: Build MySQL Image
+        run: |
+          docker build -t asec-mysql -f ./Dockerfile --target asec-mysql .
+
+      # Step 6: 构建 Backend 镜像
+      - name: Build Backend Image
+        run: |
+          docker build -t asec-backend -f ./Dockerfile --target asec-backend .
+
+      # Step 7: 导出镜像为 tar 文件
+      - name: Save Docker Images to Tar Files
+        run: |
+          mkdir -p release-package-${{ env.TIMESTAMP }}
+          docker save -o release-package-${{ env.TIMESTAMP }}/asec-frontend.tar asec-frontend
+          docker save -o release-package-${{ env.TIMESTAMP }}/asec-mysql.tar asec-mysql
+          docker save -o release-package-${{ env.TIMESTAMP }}/asec-backend.tar asec-backend
+
+      # Step 8: 添加 install.sh、releasenote.md 和 docker-compose.yml 到打包文件夹
+      - name: Add install.sh, releasenote.md, and docker-compose.yml
+        run: |
+          cp install.sh release-package-${{ env.TIMESTAMP }}/
+          cp releasenote.md release-package-${{ env.TIMESTAMP }}/
+          cp docker-compose.yml release-package-${{ env.TIMESTAMP }}/
+
+      # Step 9: 上传文件夹作为 Artifact
+      - name: Upload Release Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-package-${{ env.TIMESTAMP }}
+          path: ./release-package-${{ env.TIMESTAMP }}

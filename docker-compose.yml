@@ -1,0 +1,76 @@
+version: '3.8'
+
+networks:
+  asec_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.16.10.0/24
+volumes:
+  milvus-data:
+    name: milvus-data
+
+services:
+  asec-frontend:
+    image: asec-frontend
+    ports:
+      - "880:80"
+    volumes:
+      - /opt/ASec/asec-frontend/logs:/var/log/nginx
+    container_name: asec-frontend
+    restart: unless-stopped
+    networks:
+      - asec_network
+
+  asec-backend:
+    container_name: asec-backend
+    image: asec-backend
+    restart: unless-stopped
+    ports:
+      - 8801:8000
+    volumes:
+      - /opt/ASec/asec-backend/static/uploadfile:/static/uploadfile
+      - /opt/ASec/asec-backend/static/import-file:/static/import-file
+      - /opt/ASec/asec-backend/logs:/temp/logs
+    networks:
+      - asec_network
+    command: >
+      sh -c "/go-admin migrate -c config/settings.yml &&
+             /go-admin server -c config/settings.yml"
+
+  asec-mysql:
+    image: mariadb:10.5
+    ports:
+      - "5506:3306"
+    container_name: asec-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: asec
+      MYSQL_ROOT_PASSWORD: 123456
+      TZ: Asia/Shanghai
+    volumes:
+      - /opt/ASec/mysql:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - asec_network
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p123456"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  asec-ai:
+   image: asec-ai
+   container_name: asec-ai
+   restart: always
+   volumes:
+      - milvus-data:/app/data
+   ports:
+      - "8080:8080"
+   environment:
+     EMBEDDING_API_URL: https://chat.noc.pku.edu.cn/v1/embedding
+     EMBEDDING_API_KEY: key
+   networks:
+      - asec_network
