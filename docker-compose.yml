@@ -12,7 +12,7 @@ volumes:
 
 services:
   asec-frontend:
-    image: asec-frontend
+    image: pkucc/asec-frontend
     ports:
       - "880:80"
     volumes:
@@ -24,7 +24,7 @@ services:
 
   asec-backend:
     container_name: asec-backend
-    image: asec-backend
+    image: pkucc/asec-backend
     restart: unless-stopped
     ports:
       - 8801:8000
