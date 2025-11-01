@@ -1,0 +1,25 @@
+version: '3.8'
+
+networks:
+  asec_network:
+    external: true
+    name: asec-deploy_asec_network
+
+volumes:
+  milvus-data:
+    name: milvus-data
+
+services:
+  asec-ai:
+    image: pkucc/asec-ai
+    container_name: asec-ai
+    restart: always
+    volumes:
+      - milvus-data:/app/data
+    ports:
+      - "8080:8080"
+    environment:
+      EMBEDDING_API_URL: ${EMBEDDING_API_URL:-}
+      EMBEDDING_API_KEY: ${EMBEDDING_API_KEY:-}
+    networks:
+      - asec_network

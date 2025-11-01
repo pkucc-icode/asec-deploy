@@ -6,9 +6,7 @@ networks:
     ipam:
       config:
         - subnet: 172.16.10.0/24
-volumes:
-  milvus-data:
-    name: milvus-data
+
 
 services:
   asec-frontend:
@@ -60,17 +58,3 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
-
-  asec-ai:
-   image: asec-ai
-   container_name: asec-ai
-   restart: always
-   volumes:
-      - milvus-data:/app/data
-   ports:
-      - "8080:8080"
-   environment:
-     EMBEDDING_API_URL: ${EMBEDDING_API_URL:-}
-     EMBEDDING_API_KEY: ${EMBEDDING_API_KEY:-}
-   networks:
-      - asec_network
