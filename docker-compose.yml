@@ -70,7 +70,7 @@ services:
    ports:
       - "8080:8080"
    environment:
-     EMBEDDING_API_URL: https://chat.noc.pku.edu.cn/v1/embedding
-     EMBEDDING_API_KEY: key
+     EMBEDDING_API_URL: ${EMBEDDING_API_URL:-}
+     EMBEDDING_API_KEY: ${EMBEDDING_API_KEY:-}
    networks:
       - asec_network
