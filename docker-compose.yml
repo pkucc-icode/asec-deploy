@@ -7,6 +7,9 @@ networks:
       config:
         - subnet: 172.16.10.0/24
 
+volumes:
+  asec-data:
+    name: asec-data
 
 services:
   asec-frontend:
@@ -47,7 +50,7 @@ services:
       MYSQL_ROOT_PASSWORD: 123456
       TZ: Asia/Shanghai
     volumes:
-      - /opt/ASec/mysql:/var/lib/mysql
+      - asec-data:/app/data/mysql
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     networks:
       - asec_network
